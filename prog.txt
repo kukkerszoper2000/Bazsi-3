@@ -1,0 +1,43 @@
+from netmiko import ConnectHandler
+
+router_eszozk = {
+    'device_type': 'cisco_ios',  # Cisco IOS operációs rendszerhez
+    'host': '192.168.1.1',        # A router jelenlegi IP címe
+    'username': 'admin',          # SSH felhasználónév
+    'password': 'admin_password',  # SSH jelszó
+    'secret': 'enable_secret',    # Enable (privilegizált) mód jelszava (ha van)
+}
+
+konfiguracios_parancsok = [
+    'hostname R1',                # Új hostname beállítása (R1)
+    'line vty 0 4',               # Belépés a VTY 0-4 vonalak konfigurációjába
+    'password 12345',             # A kért jelszó beállítása
+    'login'                        # A jelszavas beléptetés kötelezővé tétele
+]
+
+try:
+    print("Csatlakozás a routerhez...")
+    # Kapcsolat létrehozása a routerrel
+    kapcsolat = ConnectHandler(**router_eszozk)
+    
+    # Belépés az enable (privilegizált) módba (szükség esetén)
+    kapcsolat.enable()
+    
+    print("Konfiguráció küldése...")
+    # A parancslista elküldése a routernek (automatikusan belép config t módba)
+    output = kapcsolat.send_config_set(konfiguracios_parancsok)
+    
+    # Az eredmény kiírása a konzolra
+    print("\n--- Router válasza ---")
+    print(output)
+    
+    # Konfiguráció mentése a router memóriájába (copy run start)
+    print("\nKonfiguráció mentése...")
+    kapcsolat.send_command('write memory')
+    
+    # Kapcsolat lezárása
+    kapcsolat.disconnect()
+    print("Kész! A kapcsolat sikeresen lezárult.")
+
+except Exception as e:
+    print(f"Hiba történt a csatlakozás vagy konfigurálás során: {e}")
